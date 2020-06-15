@@ -1,10 +1,12 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router-dom";
+import { connect } from 'react-redux';
 import axios from "../../../axios-orders";
 import Button from "../../../components/UI/Button/Button";
 import classes from "./ContactData.module.css";
 import Spinner from "../../../components/UI/Spinner/Spinner";
 import Input from "../../../components/UI/Input/Input";
+import * as actions from '../../../store/actions/index';
 
 class ContactData extends Component {
   state = {
@@ -88,13 +90,12 @@ class ContactData extends Component {
         validation: {}
       },
     },
-    loading: false,
     formIsValid: false
   };
 
   orderHandler = (event) => {
     event.preventDefault();
-    this.setState({ loading: true });
+    
     const formData = {};
     for (let key in this.state.orderForm) {
       formData[key] = this.state.orderForm[key].value;
@@ -104,15 +105,9 @@ class ContactData extends Component {
       price: +this.props.totalPrice.toFixed(2),
       orderData: formData
     };
-    axios
-      .post("/orders.json", order)
-      .then((response) => {
-        this.setState({ loading: false });
-        this.props.history.push("/");
-      })
-      .catch((error) => {
-        this.setState({ loading: false });
-      });
+
+    this.props.onBurgerOrder(order);
+    
   };
 
   ceheckValidity(value, rules) {
@@ -177,7 +172,7 @@ class ContactData extends Component {
       </form>
     );
 
-    if (this.state.loading) {
+    if (this.props.loading) {
       form = <Spinner></Spinner>;
     }
 
@@ -190,4 +185,18 @@ class ContactData extends Component {
   }
 }
 
-export default withRouter(ContactData);
+const mapStateToProps = state => {
+  return {
+    ingredients: state.burgerBuilder.ingredients,
+    totalPrice: state.burgerBuilder.totalPrice,
+    loading: state.order.loading
+  }
+}
+
+const mapDispatchToProps = dispatch => {
+  return {
+    onBurgerOrder: (orderData) => dispatch(actions.purchaseBurger(orderData))
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(withRouter(ContactData));
